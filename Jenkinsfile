@@ -26,7 +26,7 @@ pipeline {
                 sh '''
                  echo 'Running tests'
                  grep 'index.html' build
-                 
+                 npm test
 
                 '''
                 
