@@ -23,7 +23,12 @@ pipeline {
         }
         stage('Test') {
             steps {
-                sh " echo 'Running tests'"
+                sh '''
+                 echo 'Running tests'
+                 grep 'index.html' build
+                 
+
+                '''
                 
             }
         }
