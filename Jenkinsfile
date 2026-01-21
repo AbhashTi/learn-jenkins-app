@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        /*
+
         stage('Build') {
             agent {
                 docker {
@@ -12,18 +12,16 @@ pipeline {
             }
             steps {
                 sh '''
-                    ls -la
-                    node --version
-                    npm --version
                     npm ci
                     npm run build
-                    ls -la
+                    ls -la build
                 '''
             }
         }
-        */
+
         stage('Test') {
             parallel {
+
                 stage('Unit-Test') {
                     agent {
                         docker {
@@ -33,11 +31,11 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            #test -f build/index.html
                             CI=true npm test
                         '''
                     }
                 }
+
                 stage('E2E') {
                     agent {
                         docker {
@@ -47,13 +45,15 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            npm install serve
-                            node_modules/.bin/serve -s build &
-                            sleep 10
-                            npx playwright test --reporter=html
+                            npx serve -s build -l 3000 &
+                            npx playwright test \
+                              --reporter=junit,html \
+                              --output=test-results \
+                              --workers=4
                         '''
                     }
                 }
+
             }
         }
     }
@@ -61,7 +61,15 @@ pipeline {
     post {
         always {
             junit 'test-results/junit.xml'
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'playwright-report',
+                reportFiles: 'index.html',
+                reportName: 'Playwright HTML Report'
+            ])
         }
     }
 }
